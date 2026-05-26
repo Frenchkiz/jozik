@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Jozik Capital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="site-header site-header-dashboard">
+      <a href="index.html" class="logo-link">
+        <img src="images/logo.jpg" alt="Jozik Capital" class="logo-img" onerror="this.src='images/logo.svg'">
+        <span class="logo-text">Jozik <span>Capital</span></span>
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-box"><span class="nav-toggle-inner"></span></span>
+      </button>
+      <button type="button" class="nav-overlay" id="nav-overlay" hidden aria-label="Close menu"></button>
+      <nav class="site-nav dashboard-actions-mobile-nav" id="site-nav" aria-label="Dashboard menu">
+        <a href="index.html">Home</a>
+        <button type="button" class="nav-link-btn" data-nav-trigger="invest-btn">Invest</button>
+        <button type="button" class="nav-link-btn" data-nav-trigger="profile-btn">Profile</button>
+        <hr class="nav-divider">
+        <button type="button" class="nav-link-btn" data-nav-trigger="logout-btn">Logout</button>
+      </nav>
+      <div class="dashboard-actions dashboard-actions-desktop">
+        <button type="button" class="btn btn-primary" id="invest-btn">Invest</button>
+        <button type="button" class="btn btn-outline" id="profile-btn">Profile</button>
+        <button type="button" class="btn btn-ghost" id="logout-btn">Logout</button>
+      </div>
+    </header>
+
+    <header class="dashboard-header">
+      <div>
+        <p class="greeting">Welcome,</p>
+        <h1 id="user-greeting">...</h1>
+        <p class="greeting"><span id="user-level-label">Level 1</span></p>
+      </div>
+    </header>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="label">Account balance (USD)</div>
+        <div class="value" id="balance-display">$0.00</div>
+        <small style="color:var(--text-muted)"></small>
+      </div>
+      <div class="stat-card">
+        <div class="label">Your referral code</div>
+        <div class="referral-box">
+          <div class="value value-sm" id="referral-code-display">—</div>
+          <div class="referral-count">
+            <strong id="referral-count">0</strong>
+            <span>Signups</span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline" style="margin-top:0.75rem" data-copy="" id="copy-referral-btn">Copy code</button>
+      </div>
+      <div class="stat-card">
+        <div class="label">Team accumulation</div>
+        <div class="value value-sm" id="team-accumulation">₦0</div>
+        <small style="color:var(--text-muted)">Eligible level: <span id="eligible-level">1</span></small>
+      </div>
+    </div>
+
+    <div id="dashboard-main">
+      <p class="loading">Loading your portfolio…</p>
+    </div>
+  </div>
+
+  <!-- Invest modal -->
+  <div class="modal-overlay" id="invest-modal">
+    <div class="modal">
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+      <h2>Make a deposit</h2>
+      <p style="color:var(--text-muted);font-size:0.9rem">Transfer funds, then send your receipt on WhatsApp for confirmation.</p>
+
+      <div class="deposit-block">
+        <h4>Bank transfer (Naira)</h4>
+        <div class="deposit-row">
+          <span>Access Bank · 0722364383 · Jozik Capital</span>
+          <button type="button" class="btn btn-sm btn-outline" data-copy="Access Bank 0722364383 Jozik Capital" data-copy-label="Bank details">Copy</button>
+        </div>
+      </div>
+
+      <div class="deposit-block">
+        <h4>Crypto</h4>
+        <div class="deposit-row" style="margin-bottom:0.5rem">
+          <span><strong>Bitcoin</strong> — Bitcoin wallet will be here</span>
+        </div>
+        <div class="deposit-row" style="margin-bottom:0.5rem">
+          <span><strong>Ethereum</strong> — Ethereum wallet will be here</span>
+        </div>
+        <div class="deposit-row">
+          <span><strong>USDT</strong> — USDT wallet will be here</span>
+        </div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin:0.75rem 0 0">Message WhatsApp after deposit for crypto wallet details if not yet provided.</p>
+      </div>
+
+      <div class="whatsapp-note">
+        After payment, send your receipt to
+        <a class="support-link" href="https://wa.me/447365596265" target="_blank" rel="noopener" aria-label="Chat support on WhatsApp">
+          <span class="support-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20.5 11.8c0 4.6-4.1 8.2-8.7 8.2-1.1 0-2.2-.2-3.2-.6L4 20l.8-3.6c-.6-1-.9-2.1-.9-3.3C3.9 8.1 8 4.6 12.5 4.6c4.5 0 8 3.6 8 7.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M8 11.6h6.2M8 9.4h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </span>
+          support
+        </a>.
+        Your balance will update once we confirm your payment.
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile modal -->
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal">
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+      <h2>Edit profile</h2>
+      <form id="profile-form">
+        <div class="form-group">
+          <label for="edit-full-name">Full name</label>
+          <input type="text" id="edit-full-name" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-phone">Phone</label>
+          <input type="tel" id="edit-phone" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-email">Email (read-only)</label>
+          <input type="email" id="edit-email" disabled>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Save changes</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/nav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/plans.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script>
+    document.getElementById('copy-referral-btn')?.addEventListener('click', () => {
+      const code = document.getElementById('referral-code-display')?.textContent;
+      if (code && code !== '—') copyText(code, 'Referral code');
+    });
+  </script>
+</body>
+</html>

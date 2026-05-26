@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — Jozik Capital</title>
+  <meta name="description" content="Sign in to your Jozik Capital investor dashboard.">
+  <meta property="og:title" content="Jozik Capital">
+  <meta property="og:description" content="Sign in to your Jozik Capital investor dashboard.">
+  <meta property="og:image" content="https://frenchkiz.github.io/jozik/images/logo.jpg">
+  <meta property="og:url" content="https://frenchkiz.github.io/jozik/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-body" data-auth-redirect="false">
+  <div class="container">
+    <header class="site-header site-header-minimal">
+      <a href="index.html" class="logo-link">
+        <img src="images/logo.jpg" alt="Jozik Capital" class="logo-img" onerror="this.src='images/logo.svg'">
+        <span class="logo-text">Jozik <span>Capital</span></span>
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-box"><span class="nav-toggle-inner"></span></span>
+      </button>
+      <button type="button" class="nav-overlay" id="nav-overlay" hidden aria-label="Close menu"></button>
+      <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="signup.html">Sign Up</a>
+        <a href="login.html" class="btn btn-primary btn-sm">Sign In</a>
+        <a href="terms.html">Terms</a>
+      </nav>
+    </header>
+  </div>
+  <div class="auth-page">
+  <div class="auth-card">
+    <h1>Welcome back</h1>
+    <p class="subtitle">Sign in to your dashboard</p>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+      </div>
+      <p style="text-align:right;margin:-0.5rem 0 1rem">
+        <button type="button" class="link-btn" id="open-reset">Reset password</button>
+      </p>
+      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+    </form>
+
+    <p class="auth-footer">
+      New here? <a href="signup.html">Create an account</a>
+    </p>
+  </div>
+  </div>
+
+  <div class="modal-overlay" id="reset-modal">
+    <div class="modal">
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+      <h2>Reset password</h2>
+      <p style="color:var(--text-muted);font-size:0.9rem">We will email you a link to set a new password.</p>
+      <form id="reset-form">
+        <div class="form-group">
+          <label for="reset-email">Email</label>
+          <input type="email" id="reset-email" name="email" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Send reset link</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/nav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

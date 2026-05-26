@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jozik Capital — Premium Investment Platform</title>
+  <meta name="description" content="Jozik Capital — premium investment plans, referral rewards, and a secure investor dashboard.">
+  <link rel="canonical" href="https://frenchkiz.github.io/jozik/">
+
+  <!-- Open Graph / WhatsApp link preview -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Jozik Capital">
+  <meta property="og:title" content="Jozik Capital — Premium Investment Platform">
+  <meta property="og:description" content="Grow your capital with tiered daily-return plans, referral rewards, and a private investor dashboard.">
+  <meta property="og:url" content="https://frenchkiz.github.io/jozik/">
+  <meta property="og:image" content="https://frenchkiz.github.io/jozik/images/logo.jpg">
+  <meta property="og:image:secure_url" content="https://frenchkiz.github.io/jozik/images/logo.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:alt" content="Jozik Capital logo">
+
+  <!-- Twitter / X card (also used by some messengers) -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Jozik Capital — Premium Investment Platform">
+  <meta name="twitter:description" content="Grow your capital with tiered daily-return plans, referral rewards, and a private investor dashboard.">
+  <meta name="twitter:image" content="https://frenchkiz.github.io/jozik/images/logo.jpg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="images/logo.jpg" type="image/jpeg">
+</head>
+<body>
+  <div class="container">
+    <header class="site-header">
+      <a href="index.html" class="logo-link">
+        <img src="images/logo.jpg" alt="Jozik Capital" class="logo-img" onerror="this.src='images/logo.svg'">
+        <span class="logo-text">Jozik <span>Capital</span></span>
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-box"><span class="nav-toggle-inner"></span></span>
+      </button>
+      <button type="button" class="nav-overlay" id="nav-overlay" hidden aria-label="Close menu"></button>
+      <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="#features">Why Us</a>
+        <a href="#plans">Plans</a>
+        <hr class="nav-divider">
+        <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+        <a href="signup.html" class="btn btn-primary btn-sm">Get Started</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <span class="hero-badge">Luxury wealth growth</span>
+      <h1>Grow your capital with <em>confidence</em></h1>
+      <p class="lead">
+        Jozik Capital offers tiered daily-return investment plans, referral rewards,
+        and a private dashboard built for serious investors.
+      </p>
+      <div class="hero-cta">
+        <a href="signup.html" class="btn btn-primary">Open Your Account</a>
+        <a href="#plans" class="btn btn-outline">View Plans</a>
+      </div>
+
+      <div class="stats-strip">
+        <div class="stat-item">
+          <strong>2%–4.4%</strong>
+          <span>Daily returns by plan</span>
+        </div>
+        <div class="stat-item">
+          <strong>4 Levels</strong>
+          <span>Unlock higher tiers</span>
+        </div>
+        <div class="stat-item">
+          <strong>₦1,400</strong>
+          <span>Per $1 display rate</span>
+        </div>
+        <div class="stat-item">
+          <strong>24/7</strong>
+          <span>Personal dashboard</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <h2 class="section-title">Why investors choose Jozik</h2>
+      <p class="section-sub">Institutional-grade presentation. Transparent tiers. Your name on your dashboard.</p>
+      <div class="features-grid">
+        <article class="feature-card">
+          <div class="icon">◆</div>
+          <h3>Structured plans</h3>
+          <p>8 to 90-day cycles with daily percentages scaled across four membership levels.</p>
+        </article>
+        <article class="feature-card">
+          <div class="icon">◇</div>
+          <h3>Referral growth</h3>
+          <p>Your unique code tracks signups and team volume to unlock Level 2, 3, and 4 benefits.</p>
+        </article>
+        <article class="feature-card">
+          <div class="icon">○</div>
+          <h3>Secure accounts</h3>
+          <p>Email authentication, profile management, and balances updated after deposit confirmation.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="plans" class="section">
+      <h2 class="section-title">Level 1 — Available to all</h2>
+      <p class="section-sub">Minimum and maximum deposits shown in Naira with USD equivalent at ₦1,400/$</p>
+      <div id="home-plans" class="plans-grid"></div>
+      <p style="text-align:center;margin-top:2rem;color:var(--text-muted)">
+        Register to unlock Levels 2–4 with referral milestones and higher daily rates.
+      </p>
+      <p style="text-align:center;margin-top:1rem">
+        <a href="signup.html" class="btn btn-primary">Create Free Account</a>
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <p>&copy; <span id="year"></span> Jozik Capital. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script src="js/nav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/plans.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    renderPlanCards(document.getElementById('home-plans'), 1);
+    redirectIfAuthed();
+  </script>
+</body>
+</html>
