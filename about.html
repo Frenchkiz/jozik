@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us — Jozik Capital</title>
+  <meta name="description" content="Learn how Jozik Capital channels investor funds into gold mining operations across multiple countries.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="images/logo.jpg" type="image/jpeg">
+</head>
+<body>
+  <div class="container">
+    <header class="site-header">
+      <a href="index.html" class="logo-link">
+        <img src="images/logo.jpg" alt="Jozik Capital" class="logo-img" onerror="this.src='images/logo.svg'">
+        <span class="logo-text">Jozik <span>Capital</span></span>
+      </a>
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+        <span class="nav-toggle-box"><span class="nav-toggle-inner"></span></span>
+      </button>
+      <button type="button" class="nav-overlay" id="nav-overlay" hidden aria-label="Close menu"></button>
+      <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="about.html">About Us</a>
+        <a href="index.html#plans">Plans</a>
+        <hr class="nav-divider">
+        <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+        <a href="signup.html" class="btn btn-primary btn-sm">Get Started</a>
+      </nav>
+    </header>
+
+    <main class="about-page">
+      <h1>About Jozik Capital</h1>
+      <p class="about-lead">
+        Jozik Capital is a premium investment platform built for individuals who want structured returns,
+        transparent tiers, and a secure personal dashboard.
+      </p>
+
+      <section class="about-block">
+        <h2>What we do</h2>
+        <p>
+          Every investment made through Jozik Capital is channeled into <strong>gold mining operations</strong>
+          that we operate across different countries. As more investors partner with us, we expand mining capacity,
+          increase gold production, and sell responsibly in global markets.
+        </p>
+        <p>
+          Profits from gold sales are shared with investors who placed capital with us — aligned with the
+          investment plan and level you choose on the platform.
+        </p>
+      </section>
+
+      <section class="about-block">
+        <h2>How it works for you</h2>
+        <ul>
+          <li>Create your account and receive a unique referral code</li>
+          <li>Deposit funds and select an investment plan that matches your level</li>
+          <li>Track your balance, referrals, and team growth from your dashboard</li>
+          <li>Withdraw profits according to platform rules and fees</li>
+        </ul>
+      </section>
+
+      <section class="about-block">
+        <h2>Our commitment</h2>
+        <p>
+          We combine institutional presentation with clear tiered plans, referral rewards, and manual confirmation
+          of deposits for security. Our goal is sustainable growth — for our mining operations and for every
+          investor who grows with us.
+        </p>
+      </section>
+
+      <p class="about-cta">
+        <a href="signup.html" class="btn btn-primary">Start investing today</a>
+      </p>
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; <span id="year"></span> Jozik Capital. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script src="js/gold-spin.js"></script>
+  <script src="js/nav.js"></script>
+  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
