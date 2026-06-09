@@ -79,7 +79,7 @@
     <div class="modal">
       <button type="button" class="modal-close" data-close-modal>&times;</button>
       <h2>Make a deposit</h2>
-      <p style="color:var(--text-muted);font-size:0.9rem">Transfer funds, then send your receipt on WhatsApp for confirmation.</p>
+      <p style="color:var(--text-muted);font-size:0.9rem">Transfer funds, then upload your payment receipt below.</p>
 
       <div class="deposit-block">
         <h4>Bank transfer (Naira)</h4>
@@ -102,19 +102,29 @@
         </div>
       </div>
 
-      <div class="whatsapp-note">
-        After payment, send your receipt to
-        <a class="support-link" href="https://wa.me/447365596265" target="_blank" rel="noopener" aria-label="Chat support on WhatsApp">
-          <span class="support-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20.5 11.8c0 4.6-4.1 8.2-8.7 8.2-1.1 0-2.2-.2-3.2-.6L4 20l.8-3.6c-.6-1-.9-2.1-.9-3.3C3.9 8.1 8 4.6 12.5 4.6c4.5 0 8 3.6 8 7.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-              <path d="M8 11.6h6.2M8 9.4h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
-          </span>
-          support
-        </a>.
-        Your balance will update once we confirm your payment.
+      <div class="deposit-block receipt-upload-block">
+        <h4>Upload receipt</h4>
+        <label class="receipt-picker" for="receipt-file-input">
+          <span class="receipt-picker-icon">📷</span>
+          <span id="receipt-file-label">Tap to select receipt image</span>
+        </label>
+        <input type="file" id="receipt-file-input" accept="image/*" hidden>
+        <div id="receipt-preview-wrap" class="receipt-preview-wrap" hidden>
+          <img id="receipt-preview" alt="Receipt preview" class="receipt-preview">
+        </div>
+        <button type="button" class="btn btn-primary btn-block" id="upload-receipt-btn" disabled>Upload receipt</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Receipt uploaded notice -->
+  <div class="modal-overlay" id="receipt-success-modal">
+    <div class="modal">
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+      <h2>Receipt uploaded</h2>
+      <p class="notice-text">Dashboard credit can take up to <strong>30 minutes</strong>.</p>
+      <p class="notice-text">For immediate crediting, email your receipt to <a href="mailto:support@jozik.co.uk">support@jozik.co.uk</a></p>
+      <button type="button" class="btn btn-primary btn-block" data-close-modal>OK</button>
     </div>
   </div>
 
@@ -123,7 +133,7 @@
     <div class="modal">
       <button type="button" class="modal-close" data-close-modal>&times;</button>
       <h2>Request withdrawal</h2>
-      <p class="modal-hint">Your details are pre-filled. Complete the form and send — WhatsApp opens with your full request ready to submit.</p>
+      <p class="modal-hint">Your details are pre-filled. Complete the form and tap Send.</p>
 
       <form id="withdrawal-form">
         <div class="form-group">
@@ -139,8 +149,9 @@
           <input type="text" id="wd-referral-code" readonly>
         </div>
         <div class="form-group">
-          <label for="wd-amount">Withdrawal amount</label>
-          <input type="number" id="wd-amount" min="1" step="0.01" required placeholder="Enter amount">
+          <label for="wd-amount">Withdrawal amount (USD)</label>
+          <input type="number" id="wd-amount" min="0.01" step="0.01" required placeholder="Enter amount">
+          <small class="field-hint">Available balance: <strong id="wd-balance-hint">$0.00</strong></small>
         </div>
         <div class="form-group">
           <label for="withdrawal-method">Withdraw via</label>
@@ -180,8 +191,60 @@
           </div>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Send to WhatsApp</button>
+        <button type="submit" class="btn btn-primary btn-block">Send</button>
       </form>
+    </div>
+  </div>
+
+  <!-- Withdrawal submitted notice -->
+  <div class="modal-overlay" id="withdrawal-success-modal">
+    <div class="modal">
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+      <h2>Withdrawal submitted</h2>
+      <p class="notice-text">Crediting external accounts can take up to <strong>30 minutes</strong> due to banking policies.</p>
+      <p class="notice-text">For faster withdrawal, email <a href="mailto:support@jozik.co.uk?subject=Withdrawal">support@jozik.com.uk</a> with the subject line <strong>Withdrawal</strong>.</p>
+      <button type="button" class="btn btn-primary btn-block" data-close-modal>OK</button>
+    </div>
+  </div>
+
+  <!-- Plan confirm modal -->
+  <div class="modal-overlay" id="plan-confirm-modal">
+    <div class="modal">
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+      <h2>Confirm investment plan</h2>
+      <div id="plan-confirm-body" class="plan-confirm-body"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close-modal>No, cancel</button>
+        <button type="button" class="btn btn-primary" id="plan-confirm-yes">Yes, invest</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invest amount modal -->
+  <div class="modal-overlay" id="invest-amount-modal">
+    <div class="modal">
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+      <h2>Enter investment amount</h2>
+      <p id="invest-amount-hint" class="modal-hint"></p>
+      <form id="invest-amount-form">
+        <div class="form-group">
+          <label for="invest-amount-input">Amount (USD)</label>
+          <input type="number" id="invest-amount-input" step="0.01" min="0" required placeholder="0.00">
+          <small id="invest-amount-limits" class="field-hint"></small>
+        </div>
+        <p class="field-hint">Available balance: <strong id="invest-balance-hint">$0.00</strong></p>
+        <button type="submit" class="btn btn-primary btn-block">Confirm investment</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- View investment modal -->
+  <div class="modal-overlay" id="investment-view-modal">
+    <div class="modal">
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+      <h2>Investment details</h2>
+      <div id="investment-view-body" class="investment-detail-body"></div>
+      <button type="button" class="btn btn-outline btn-block" data-close-modal>Close</button>
     </div>
   </div>
 
@@ -208,6 +271,7 @@
     </div>
   </div>
 
+  <script src="js/footer.js"></script>
   <script src="js/gold-spin.js"></script>
   <script src="js/nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -30,22 +30,10 @@ const INVESTMENT_PLANS = {
 };
 
 const LEVEL_REQUIREMENTS = [
-  { level: 1, title: 'Level 1 — Starter', desc: 'Open to everyone. Start investing immediately.' },
-  {
-    level: 2,
-    title: 'Level 2 — Builder',
-    desc: 'Refer at least 3 people using your code, with ₦100,000 team accumulation from their investments.',
-  },
-  {
-    level: 3,
-    title: 'Level 3 — Director',
-    desc: '2 active Level 2 members, 5 active Level 1 members, and ₦1,000,000 team accumulation via your referral code.',
-  },
-  {
-    level: 4,
-    title: 'Level 4 — Elite',
-    desc: '2 active Level 3 members, 1 active Level 2 member, 10 active Level 1 members, and ₦2,000,000 team accumulation.',
-  },
+  { level: 1, title: 'Level 1 — Starter', desc: 'Open to everyone.' },
+  { level: 2, title: 'Level 2 — Builder', desc: 'Higher daily rates — open to all investors.' },
+  { level: 3, title: 'Level 3 — Director', desc: 'Premium plans — open to all investors.' },
+  { level: 4, title: 'Level 4 — Elite', desc: 'Highest returns — open to all investors.' },
 ];
 
 const MONTHLY_SALARY_TIERS = [
@@ -59,55 +47,77 @@ const REFERRAL_BONUS = {
   level2Plus: { gen1: 10, gen2: 4, gen3: 2 },
 };
 
+function planMinUsd(plan) {
+  return Number(plan.minNgn) / NGN_PER_USD;
+}
+
+function planMaxUsd(plan) {
+  return Number(plan.maxNgn) / NGN_PER_USD;
+}
+
+function calcExpectedProfit(amountUsd, dailyRate, days) {
+  return Number(amountUsd) * (Number(dailyRate) / 100) * Number(days);
+}
+
+function planCardHtml(level, plan, extraClass = '') {
+  return `
+    <article
+      class="plan-card plan-selectable ${extraClass}"
+      role="button"
+      tabindex="0"
+      data-level="${level}"
+      data-days="${plan.days}"
+      data-daily="${plan.daily}"
+      data-min-ngn="${plan.minNgn}"
+      data-max-ngn="${plan.maxNgn}"
+      aria-label="Level ${level} — ${plan.days} day plan at ${plan.daily}% daily"
+    >
+      <div class="plan-level-tag">Level ${level}</div>
+      <div class="plan-days">${plan.days} Days</div>
+      <div class="plan-rate">${plan.daily}% <span>daily</span></div>
+      <ul class="plan-limits">
+        <li>Min: ${formatNgnWithUsd(plan.minNgn)}</li>
+        <li>Max: ${formatNgnWithUsd(plan.maxNgn)}</li>
+      </ul>
+      <span class="plan-tap-hint">Tap to invest</span>
+    </article>
+  `;
+}
+
 function renderPlanCards(container, userLevel) {
   if (!container) return;
   const plans = INVESTMENT_PLANS[userLevel] || INVESTMENT_PLANS[1];
-  const locked = (lvl) => lvl > userLevel;
-
-  container.innerHTML = plans
-    .map(
-      (p) => `
-    <article class="plan-card ${locked(userLevel) ? '' : ''}">
-      <div class="plan-days">${p.days} Days</div>
-      <div class="plan-rate">${p.daily}% <span>daily</span></div>
-      <ul class="plan-limits">
-        <li>Min: ${formatNgnWithUsd(p.minNgn)}</li>
-        <li>Max: ${formatNgnWithUsd(p.maxNgn)}</li>
-      </ul>
-    </article>
-  `,
-    )
-    .join('');
+  container.innerHTML = plans.map((p) => planCardHtml(userLevel, p)).join('');
 }
 
-function renderAllLevelsOverview(container, userLevel) {
+function renderAllLevelsOverview(container) {
   if (!container) return;
   container.innerHTML = [1, 2, 3, 4]
     .map((lvl) => {
       const req = LEVEL_REQUIREMENTS.find((r) => r.level === lvl);
-      const isCurrent = lvl === userLevel;
-      const isLocked = lvl > userLevel;
       const plans = INVESTMENT_PLANS[lvl];
       return `
-        <section class="level-block ${isCurrent ? 'level-current' : ''} ${isLocked ? 'level-locked' : ''}">
+        <section class="level-block">
           <header>
-            <h3>${req.title} ${isCurrent ? '<span class="badge">Your level</span>' : ''} ${isLocked ? '<span class="badge badge-muted">Locked</span>' : ''}</h3>
+            <h3>${req.title}</h3>
             <p>${req.desc}</p>
           </header>
           <div class="plans-grid plans-grid-sm">
-            ${plans
-              .map(
-                (p) => `
-              <div class="plan-mini">
-                <strong>${p.days}d</strong> · ${p.daily}%/day<br>
-                <small>${formatNgnWithUsd(p.minNgn)} – ${formatNgnWithUsd(p.maxNgn)}</small>
-              </div>
-            `,
-              )
-              .join('')}
+            ${plans.map((p) => planCardHtml(lvl, p, 'plan-card-sm')).join('')}
           </div>
         </section>
       `;
     })
     .join('');
+}
+
+function getPlanFromElement(el) {
+  if (!el) return null;
+  return {
+    level: Number(el.dataset.level),
+    days: Number(el.dataset.days),
+    daily: Number(el.dataset.daily),
+    minNgn: Number(el.dataset.minNgn),
+    maxNgn: Number(el.dataset.maxNgn),
+  };
 }

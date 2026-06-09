@@ -5,7 +5,11 @@ Investment platform frontend (HTML/CSS/JS) with Supabase authentication and prof
 ## Setup
 
 1. **Supabase SQL**  
-   Open [Supabase SQL Editor](https://supabase.com/dashboard/project/vtvxcqugigtznzkfoevm/sql) and run the full contents of `supabase/schema.sql`.
+   Open [Supabase SQL Editor](https://supabase.com/dashboard/project/vtvxcqugigtznzkfoevm/sql) and run:
+   - `supabase/schema.sql`
+   - `supabase/investments.sql` (investments table + invest/maturity functions)
+   - `supabase/receipts_withdrawals.sql` (receipt upload, withdrawal requests, balance fix)
+   - `supabase/withdrawal_balance.sql` (withdrawal deducts balance automatically)
 
 2. **Auth settings** (Supabase Dashboard → Authentication → URL Configuration)  
    - Site URL: your deployed site URL (or `http://localhost:5500` for local testing)  
@@ -25,7 +29,8 @@ Investment platform frontend (HTML/CSS/JS) with Supabase authentication and prof
 ## Admin: update user balance
 
 1. Supabase → **Table Editor** → `profiles`  
-2. Edit `balance` (shown as USD on dashboard) and/or `total_invested` (feeds referrer `team_accumulation`)  
+2. Edit `balance` (shown as USD on dashboard) and/or `total_invested` (feeds referrer `team_accumulation`)
+3. View `receipt_urls` (latest receipt image links on top) and `withdrawal_requests` (latest withdrawal on top)  
 3. Optionally set `level`, `monthly_team_accumulation` manually  
 
 ## Project structure
