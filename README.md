@@ -10,6 +10,8 @@ Investment platform frontend (HTML/CSS/JS) with Supabase authentication and prof
    - `supabase/investments.sql` (investments table + invest/maturity functions)
    - `supabase/receipts_withdrawals.sql` (receipt upload, withdrawal requests, balance fix)
    - `supabase/withdrawal_balance.sql` (withdrawal deducts balance automatically)
+   - `supabase/fix_daily_rewards_drops.sql` (run first if "cannot change return type" errors)
+   - `supabase/daily_rewards.sql` (daily profit, referrals, levels, monthly salary)
 
 2. **Auth settings** (Supabase Dashboard → Authentication → URL Configuration)  
    - Site URL: your deployed site URL (or `http://localhost:5500` for local testing)  

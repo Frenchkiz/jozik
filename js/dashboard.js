@@ -18,19 +18,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('deposit-modal')?.classList.add('open');
   });
 
-  document.getElementById('withdrawal-btn')?.addEventListener('click', () => {
-    openWithdrawalModal();
-  });
+  document.getElementById('withdrawal-btn')?.addEventListener('click', openWithdrawalModal);
+  document.getElementById('profile-btn')?.addEventListener('click', openProfileModal);
 
-  document.getElementById('profile-btn')?.addEventListener('click', () => {
-    openProfileModal();
-  });
-
-  document.getElementById('investment-plan-btn')?.addEventListener('click', toggleInvestmentPlans);
-  document.getElementById('investment-plan-btn-desktop')?.addEventListener('click', toggleInvestmentPlans);
+  document.getElementById('investment-plan-btn')?.addEventListener('click', openPlansModal);
+  document.getElementById('investment-plan-btn-desktop')?.addEventListener('click', openPlansModal);
 
   document.getElementById('withdrawal-method')?.addEventListener('change', updateWithdrawalFields);
-
   document.getElementById('withdrawal-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
     submitWithdrawal();
@@ -100,9 +94,13 @@ async function loadDashboard() {
     return;
   }
 
-  const { data: maturedCount, error: matureErr } = await sb.rpc('process_matured_investments');
-  if (!matureErr && maturedCount > 0) {
-    showToast(`${maturedCount} investment(s) matured — balance updated!`, 'success');
+  const { data: rewards, error: rewardsErr } = await sb.rpc('process_daily_rewards');
+  if (!rewardsErr && rewards) {
+    const parts = [];
+    if (rewards.daily_credits > 0) parts.push(`${rewards.daily_credits} daily profit credit(s)`);
+    if (rewards.matured > 0) parts.push(`${rewards.matured} investment(s) matured`);
+    if (rewards.salary_usd > 0) parts.push(`monthly salary ${formatUsd(rewards.salary_usd)}`);
+    if (parts.length) showToast(parts.join(' · '), 'success');
   }
 
   const { data: profile, error } = await sb
@@ -114,7 +112,7 @@ async function loadDashboard() {
   if (error || !profile) {
     if (main) {
       main.innerHTML =
-        '<p class="loading">Unable to load profile. Ensure you ran supabase/schema.sql and investments.sql.</p>';
+        '<p class="loading">Unable to load profile. Run supabase/schema.sql, investments.sql, and daily_rewards.sql.</p>';
     }
     return;
   }
@@ -129,9 +127,6 @@ async function loadDashboard() {
     .order('created_at', { ascending: false });
 
   userInvestments = invErr ? [] : (investments || []);
-  if (invErr) {
-    console.warn('Investments load:', invErr.message);
-  }
 
   const { data: referralSignups, error: countErr } = await sb.rpc(
     'get_referral_signup_count',
@@ -139,69 +134,75 @@ async function loadDashboard() {
   );
 
   const eligibleLevel = await fetchEligibleLevel(user.id);
-  const bonus = profile.level >= 2 ? REFERRAL_BONUS.level2Plus : REFERRAL_BONUS.belowLevel2;
-  const salaryNote = getSalaryTier(profile);
   const signups = countErr ? 0 : (referralSignups ?? 0);
+  const teamProfitNgn = profile.team_profit_accumulation_ngn ?? profile.team_accumulation ?? 0;
 
   document.getElementById('user-greeting').textContent = profile.full_name || 'Investor';
   document.getElementById('user-level-label').textContent = `Level ${profile.level}`;
   document.getElementById('balance-display').textContent = formatUsd(profile.balance || 0);
   document.getElementById('referral-code-display').textContent = profile.referral_code;
   document.getElementById('referral-count').textContent = signups;
-  document.getElementById('team-accumulation').textContent = formatNgn(profile.team_accumulation || 0);
+  document.getElementById('team-accumulation').textContent = formatNgn(teamProfitNgn);
   document.getElementById('eligible-level').textContent = eligibleLevel;
 
   if (main) {
     main.innerHTML = `
       <section class="my-investments-section">
         <h2 class="section-title">Your investments</h2>
+        <p class="section-sub">Capital is locked until maturity. Daily profit credits to your balance automatically.</p>
         <div id="investments-list"></div>
       </section>
-
-      <div id="investment-plans-panel" class="investment-plans-panel" hidden>
-        <section>
-          <h2 class="section-title">Choose a plan</h2>
-          <p class="section-sub">All levels are open. Tap a plan to invest. Limits shown in Naira with USD at ₦${NGN_PER_USD}/$1.</p>
-          <div id="all-levels"></div>
-        </section>
-
-        <section class="info-panel">
-          <h3>Referral bonuses (% of members' daily earnings, not capital)</h3>
-          <ul>
-            <li>Your tier (Level ${profile.level >= 2 ? '2+' : '1'}): ${bonus.gen1}% 1st gen · ${bonus.gen2}% 2nd gen · ${bonus.gen3}% 3rd gen</li>
-            <li>Level 2+: 10% / 4% / 2% · Below Level 2: 8% / 3% / 1%</li>
-          </ul>
-          <h3>Monthly salary (Level 2+ required)</h3>
-          <p>${salaryNote}</p>
-          <h3>Withdrawals &amp; fees</h3>
-          <ul>
-            <li>₦${WITHDRAWAL_FEE_NGN} fee for dollar withdrawals (≈ ${formatUsd(ngnToUsd(WITHDRAWAL_FEE_NGN))})</li>
-            <li>Crypto withdrawal: ${CRYPTO_WITHDRAWAL_PERCENT}% charge</li>
-            <li>Naira withdrawal: ${NAIRA_WITHDRAWAL_PERCENT}% charge</li>
-            <li>Profit can be withdrawn · Minimum withdrawal: ${formatNgnWithUsd(MIN_WITHDRAWAL_NGN)}</li>
-          </ul>
-          <h3>Level progress</h3>
-          <ul id="level-progress"></ul>
-        </section>
-      </div>
     `;
-
-    renderAllLevelsOverview(document.getElementById('all-levels'));
-    renderLevelProgress(document.getElementById('level-progress'), profile, signups);
     renderInvestmentsList();
-    bindPlanSelection();
   }
+
+  renderPlansModalContent(profile, signups);
 }
 
-function bindPlanSelection() {
-  const panel = document.getElementById('investment-plans-panel');
-  if (!panel) return;
+function renderPlansModalContent(profile, signups = 0) {
+  const levelsEl = document.getElementById('plans-modal-levels');
+  const infoEl = document.getElementById('plans-modal-info');
+  if (!levelsEl) return;
 
-  panel.querySelectorAll('.plan-selectable').forEach((card) => {
-    card.addEventListener('click', () => handlePlanSelect(getPlanFromElement(card)));
+  renderAllLevelsOverview(levelsEl);
+
+  if (infoEl) {
+    infoEl.innerHTML = `
+      <h3>Referral bonuses (of team daily profit)</h3>
+      <p>${getReferralBonusText()}</p>
+      <h3>Monthly salary (Level 2+)</h3>
+      <p>${getSalaryTierText(profile)}</p>
+      <h3>Level progress</h3>
+      <ul id="level-progress"></ul>
+    `;
+    renderLevelProgress(document.getElementById('level-progress'), profile, signups);
+  }
+
+  bindPlanSelection(levelsEl);
+}
+
+function openPlansModal() {
+  if (currentProfile) {
+    const signups = document.getElementById('referral-count')?.textContent || 0;
+    renderPlansModalContent(currentProfile, Number(signups) || 0);
+  }
+  document.getElementById('plans-modal')?.classList.add('open');
+}
+
+function bindPlanSelection(root) {
+  if (!root) return;
+  root.querySelectorAll('.plan-selectable').forEach((card) => {
+    card.replaceWith(card.cloneNode(true));
+  });
+  root.querySelectorAll('.plan-selectable').forEach((card) => {
+    card.addEventListener('click', () => {
+      document.getElementById('plans-modal')?.classList.remove('open');
+      handlePlanSelect(getPlanFromElement(card));
+    });
     card.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        document.getElementById('plans-modal')?.classList.remove('open');
         handlePlanSelect(getPlanFromElement(card));
       }
     });
@@ -213,29 +214,28 @@ function handlePlanSelect(plan) {
 
   const balance = Number(currentProfile.balance) || 0;
   const minUsd = planMinUsd(plan);
-  const maxUsd = planMaxUsd(plan);
 
   if (balance < minUsd) {
-    showToast(
-      `Insufficient balance. You need at least ${formatUsd(minUsd)} for this plan.`,
-      'error',
-    );
+    showToast(`Insufficient balance. You need at least ${formatUsd(minUsd)} for this plan.`, 'error');
     return;
   }
 
   selectedPlan = plan;
+  const maxInvest = Math.min(planMaxUsd(plan), balance);
+  const dailyProfit = calcDailyProfit(maxInvest, plan.daily);
 
   document.getElementById('plan-confirm-body').innerHTML = `
     <ul class="plan-detail-list">
       <li><strong>Level:</strong> ${plan.level}</li>
       <li><strong>Duration:</strong> ${plan.days} days</li>
-      <li><strong>Daily rate:</strong> ${plan.daily}%</li>
+      <li><strong>Daily rate:</strong> ${plan.daily}% of locked capital</li>
       <li><strong>Minimum:</strong> ${formatNgnWithUsd(plan.minNgn)}</li>
       <li><strong>Maximum:</strong> ${formatNgnWithUsd(plan.maxNgn)}</li>
       <li><strong>Your balance:</strong> ${formatUsd(balance)}</li>
-      <li><strong>Est. profit at max:</strong> ${formatUsd(calcExpectedProfit(Math.min(balance, maxUsd), plan.daily, plan.days))}</li>
+      <li><strong>Daily profit (at max):</strong> ${formatUsd(dailyProfit)}/day</li>
+      <li><strong>Total profit (${plan.days} days):</strong> ${formatUsd(calcExpectedProfit(maxInvest, plan.daily, plan.days))}</li>
     </ul>
-    <p class="modal-hint">On maturity, principal + profit (${plan.daily}% × ${plan.days} days) returns to your balance automatically.</p>
+    <p class="modal-hint">Only your investment amount is locked. Daily profit is credited to your balance each day. At maturity, your capital returns automatically.</p>
   `;
 
   document.getElementById('plan-confirm-modal')?.classList.add('open');
@@ -249,7 +249,7 @@ function openInvestAmountModal() {
   const maxUsd = Math.min(planMaxUsd(selectedPlan), balance);
 
   document.getElementById('invest-amount-hint').textContent =
-    `Level ${selectedPlan.level} · ${selectedPlan.days} days · ${selectedPlan.daily}% daily`;
+    `Level ${selectedPlan.level} · ${selectedPlan.days} days · ${selectedPlan.daily}% daily on locked capital`;
 
   const input = document.getElementById('invest-amount-input');
   input.min = minUsd.toFixed(2);
@@ -280,10 +280,6 @@ async function submitInvestment() {
     showToast(`Maximum you can invest is ${formatUsd(maxUsd)}`, 'error');
     return;
   }
-  if (amount > balance) {
-    showToast('Amount exceeds your available balance', 'error');
-    return;
-  }
 
   const btn = document.querySelector('#invest-amount-form button[type="submit"]');
   btn.disabled = true;
@@ -304,34 +300,179 @@ async function submitInvestment() {
     return;
   }
 
-  const newBalance =
-    data && typeof data === 'object' && data.new_balance != null
-      ? Number(data.new_balance)
-      : balance - amount;
-
+  const newBalance = data?.new_balance != null ? Number(data.new_balance) : balance - amount;
   currentProfile.balance = newBalance;
   document.getElementById('balance-display').textContent = formatUsd(newBalance);
 
   document.getElementById('invest-amount-modal')?.classList.remove('open');
   selectedPlan = null;
-  showToast(`Invested ${formatUsd(amount)} — new balance ${formatUsd(newBalance)}`, 'success');
+  showToast(`Invested ${formatUsd(amount)} — ${formatUsd(amount)} locked until maturity`, 'success');
   await loadDashboard();
+}
+
+function renderInvestmentsList() {
+  const container = document.getElementById('investments-list');
+  if (!container) return;
+
+  if (!userInvestments.length) {
+    container.innerHTML =
+      '<p class="empty-investments">No investments yet. Click <strong>Plans</strong> to start.</p>';
+    return;
+  }
+
+  container.innerHTML = userInvestments
+    .map((inv) => {
+      const daily = calcDailyProfit(inv.amount_usd, inv.daily_rate);
+      const earned = Number(inv.total_profit_credited) || 0;
+      const totalExpected = calcExpectedProfit(inv.amount_usd, inv.daily_rate, inv.plan_days);
+      const statusLabel = inv.status === 'matured' ? 'Matured' : 'Active';
+      const statusClass = inv.status === 'matured' ? 'status-matured' : 'status-active';
+      const progress = `${inv.days_credited || 0}/${inv.plan_days} days`;
+
+      return `
+        <article class="investment-row">
+          <div class="investment-row-info">
+            <strong>Level ${inv.plan_level} · ${inv.plan_days}d · ${inv.daily_rate}%/day</strong>
+            <span>${formatUsd(inv.amount_usd)} locked · ${formatUsd(daily)}/day · Earned ${formatUsd(earned)} / ${formatUsd(totalExpected)}</span>
+            <span>${progress} · <span class="investment-status ${statusClass}">${statusLabel}</span></span>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline" data-view-investment="${inv.id}">View</button>
+        </article>
+      `;
+    })
+    .join('');
+
+  container.querySelectorAll('[data-view-investment]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const inv = userInvestments.find((i) => i.id === btn.dataset.viewInvestment);
+      if (inv) openInvestmentViewModal(inv);
+    });
+  });
+}
+
+function openInvestmentViewModal(inv) {
+  const daily = calcDailyProfit(inv.amount_usd, inv.daily_rate);
+  const earned = Number(inv.total_profit_credited) || 0;
+  const totalExpected = calcExpectedProfit(inv.amount_usd, inv.daily_rate, inv.plan_days);
+  const started = new Date(inv.started_at).toLocaleString();
+  const matures = new Date(inv.matures_at).toLocaleString();
+
+  document.getElementById('investment-view-body').innerHTML = `
+    <ul class="plan-detail-list">
+      <li><strong>Status:</strong> ${inv.status === 'matured' ? 'Matured ✓' : 'Active'}</li>
+      <li><strong>Capital locked:</strong> ${formatUsd(inv.amount_usd)}</li>
+      <li><strong>Daily profit:</strong> ${formatUsd(daily)}</li>
+      <li><strong>Profit earned:</strong> ${formatUsd(earned)}</li>
+      <li><strong>Total expected profit:</strong> ${formatUsd(totalExpected)}</li>
+      <li><strong>Days credited:</strong> ${inv.days_credited || 0} / ${inv.plan_days}</li>
+      <li><strong>Started:</strong> ${started}</li>
+      <li><strong>Matures:</strong> ${matures}</li>
+      ${inv.status === 'matured' ? `<li><strong>Capital returned:</strong> ${formatUsd(inv.amount_usd)}</li>` : ''}
+    </ul>
+  `;
+  document.getElementById('investment-view-modal')?.classList.add('open');
+}
+
+function openWithdrawalModal() {
+  if (!currentProfile) return;
+  document.getElementById('withdrawal-form')?.reset();
+  const balance = Number(currentProfile.balance) || 0;
+
+  document.getElementById('wd-full-name').value = currentProfile.full_name || '';
+  document.getElementById('wd-email').value = currentProfile.email || '';
+  document.getElementById('wd-referral-code').value = currentProfile.referral_code || '';
+
+  const amountInput = document.getElementById('wd-amount');
+  if (amountInput) {
+    amountInput.max = balance > 0 ? balance.toFixed(2) : '0';
+    amountInput.placeholder = balance > 0 ? `Max ${formatUsd(balance)}` : 'No balance';
+    amountInput.disabled = balance <= 0;
+  }
+
+  document.getElementById('wd-balance-hint').textContent = formatUsd(balance);
+  updateWithdrawalFields();
+  document.getElementById('withdrawal-modal')?.classList.add('open');
+}
+
+function updateWithdrawalFields() {
+  const method = document.getElementById('withdrawal-method')?.value;
+  document.getElementById('withdrawal-bank-fields').hidden = method !== 'bank';
+  document.getElementById('withdrawal-crypto-fields').hidden = method !== 'crypto';
+}
+
+async function submitWithdrawal() {
+  if (!currentProfile) return;
+
+  const amount = document.getElementById('wd-amount').value.trim();
+  const method = document.getElementById('withdrawal-method').value;
+  const balance = Number(currentProfile.balance) || 0;
+
+  if (!amount || Number(amount) <= 0) {
+    showToast('Enter a valid withdrawal amount', 'error');
+    return;
+  }
+  if (Number(amount) > balance) {
+    showToast(`You can only withdraw up to ${formatUsd(balance)}`, 'error');
+    return;
+  }
+
+  const request = {
+    full_name: currentProfile.full_name || '',
+    email: currentProfile.email || '',
+    referral_code: currentProfile.referral_code || '',
+    amount: Number(amount),
+    method: method === 'bank' ? 'Bank Account' : 'Crypto',
+  };
+
+  if (method === 'bank') {
+    request.bank_name = document.getElementById('wd-bank-name').value.trim();
+    request.account_number = document.getElementById('wd-account-number').value.trim();
+    request.account_name = document.getElementById('wd-account-name').value.trim();
+    if (!request.bank_name || !request.account_number || !request.account_name) {
+      showToast('Fill in all bank details', 'error');
+      return;
+    }
+  } else {
+    request.crypto_type = document.getElementById('wd-crypto-type').value;
+    request.wallet_address = document.getElementById('wd-wallet').value.trim();
+    if (!request.wallet_address) {
+      showToast('Enter your crypto wallet address', 'error');
+      return;
+    }
+  }
+
+  const btn = document.querySelector('#withdrawal-form button[type="submit"]');
+  btn.disabled = true;
+
+  const { data, error } = await sb.rpc('add_withdrawal_request', { p_request: request });
+
+  btn.disabled = false;
+
+  if (error) {
+    showToast(error.message, 'error');
+    return;
+  }
+
+  const newBalance = data?.new_balance != null ? Number(data.new_balance) : balance - Number(amount);
+  currentProfile.balance = newBalance;
+  document.getElementById('balance-display').textContent = formatUsd(newBalance);
+
+  document.getElementById('withdrawal-modal')?.classList.remove('open');
+  document.getElementById('withdrawal-success-modal')?.classList.add('open');
+  showToast(`Withdrawal sent — new balance ${formatUsd(newBalance)}`, 'success');
 }
 
 function onReceiptFileSelected(e) {
   const file = e.target.files?.[0];
   if (!file) return;
-
   if (!file.type.startsWith('image/')) {
     showToast('Please select an image file', 'error');
     e.target.value = '';
     return;
   }
-
   selectedReceiptFile = file;
   document.getElementById('receipt-file-label').textContent = file.name;
   document.getElementById('upload-receipt-btn').disabled = false;
-
   const preview = document.getElementById('receipt-preview');
   const wrap = document.getElementById('receipt-preview-wrap');
   if (preview && wrap) {
@@ -356,26 +497,21 @@ async function uploadReceipt() {
   const ext = selectedReceiptFile.name.split('.').pop() || 'jpg';
   const path = `${user.id}/${Date.now()}.${ext}`;
 
-  const { error: uploadErr } = await sb.storage
-    .from('receipts')
-    .upload(path, selectedReceiptFile, { cacheControl: '3600', upsert: false });
+  const { error: uploadErr } = await sb.storage.from('receipts').upload(path, selectedReceiptFile);
+
+  btn.disabled = false;
+  btn.textContent = 'Upload receipt';
 
   if (uploadErr) {
     showToast(uploadErr.message, 'error');
-    btn.disabled = false;
-    btn.textContent = 'Upload receipt';
     return;
   }
 
   const { data: urlData } = sb.storage.from('receipts').getPublicUrl(path);
-
   const { error: rpcErr } = await sb.rpc('add_user_receipt', {
     p_url: urlData.publicUrl,
     p_file_name: selectedReceiptFile.name,
   });
-
-  btn.disabled = false;
-  btn.textContent = 'Upload receipt';
 
   if (rpcErr) {
     showToast(rpcErr.message, 'error');
@@ -388,214 +524,21 @@ async function uploadReceipt() {
   document.getElementById('receipt-preview-wrap').hidden = true;
   document.getElementById('deposit-modal')?.classList.remove('open');
   document.getElementById('receipt-success-modal')?.classList.add('open');
-  showToast('Receipt uploaded successfully', 'success');
-}
-
-function renderInvestmentsList() {
-  const container = document.getElementById('investments-list');
-  if (!container) return;
-
-  if (!userInvestments.length) {
-    container.innerHTML =
-      '<p class="empty-investments">No investments yet. Click <strong>Plans</strong> in the header to start.</p>';
-    return;
-  }
-
-  container.innerHTML = userInvestments
-    .map((inv) => {
-      const profit =
-        inv.status === 'matured'
-          ? Number(inv.profit_usd)
-          : calcExpectedProfit(inv.amount_usd, inv.daily_rate, inv.plan_days);
-      const statusLabel = inv.status === 'matured' ? 'Matured' : 'Active';
-      const statusClass = inv.status === 'matured' ? 'status-matured' : 'status-active';
-      return `
-        <article class="investment-row">
-          <div class="investment-row-info">
-            <strong>Level ${inv.plan_level} · ${inv.plan_days}d · ${inv.daily_rate}%/day</strong>
-            <span>${formatUsd(inv.amount_usd)} invested · Profit: ${formatUsd(profit)}</span>
-            <span class="investment-status ${statusClass}">${statusLabel}</span>
-          </div>
-          <button type="button" class="btn btn-sm btn-outline" data-view-investment="${inv.id}">View</button>
-        </article>
-      `;
-    })
-    .join('');
-
-  container.querySelectorAll('[data-view-investment]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const inv = userInvestments.find((i) => i.id === btn.dataset.viewInvestment);
-      if (inv) openInvestmentViewModal(inv);
-    });
-  });
-}
-
-function openInvestmentViewModal(inv) {
-  const profit =
-    inv.status === 'matured'
-      ? Number(inv.profit_usd)
-      : calcExpectedProfit(inv.amount_usd, inv.daily_rate, inv.plan_days);
-  const payout = Number(inv.amount_usd) + profit;
-  const started = new Date(inv.started_at).toLocaleString();
-  const matures = new Date(inv.matures_at).toLocaleString();
-  const matured = inv.matured_at ? new Date(inv.matured_at).toLocaleString() : '—';
-
-  document.getElementById('investment-view-body').innerHTML = `
-    <ul class="plan-detail-list">
-      <li><strong>Status:</strong> ${inv.status === 'matured' ? 'Matured ✓' : 'Active'}</li>
-      <li><strong>Level:</strong> ${inv.plan_level}</li>
-      <li><strong>Duration:</strong> ${inv.plan_days} days</li>
-      <li><strong>Daily rate:</strong> ${inv.daily_rate}%</li>
-      <li><strong>Amount invested:</strong> ${formatUsd(inv.amount_usd)}</li>
-      <li><strong>Expected profit:</strong> ${formatUsd(profit)}</li>
-      <li><strong>Total at maturity:</strong> ${formatUsd(payout)}</li>
-      <li><strong>Started:</strong> ${started}</li>
-      <li><strong>Matures:</strong> ${matures}</li>
-      ${inv.status === 'matured' ? `<li><strong>Matured on:</strong> ${matured}</li>` : ''}
-    </ul>
-  `;
-  document.getElementById('investment-view-modal')?.classList.add('open');
-}
-
-function toggleInvestmentPlans() {
-  const panel = document.getElementById('investment-plans-panel');
-  if (!panel) return;
-  const willOpen = panel.hidden;
-  panel.hidden = !willOpen;
-  panel.classList.toggle('is-open', willOpen);
-  document.getElementById('investment-plan-btn')?.setAttribute('aria-expanded', String(willOpen));
-  document.getElementById('investment-plan-btn-desktop')?.setAttribute('aria-expanded', String(willOpen));
-  document.getElementById('investment-plan-btn-desktop')?.classList.toggle('btn-active', willOpen);
-}
-
-function openWithdrawalModal() {
-  if (!currentProfile) return;
-  const form = document.getElementById('withdrawal-form');
-  form?.reset();
-  const balance = Number(currentProfile.balance) || 0;
-
-  document.getElementById('wd-full-name').value = currentProfile.full_name || '';
-  document.getElementById('wd-email').value = currentProfile.email || '';
-  document.getElementById('wd-referral-code').value = currentProfile.referral_code || '';
-
-  const amountInput = document.getElementById('wd-amount');
-  if (amountInput) {
-    amountInput.max = balance > 0 ? balance.toFixed(2) : '0';
-    amountInput.placeholder = balance > 0 ? `Max ${formatUsd(balance)}` : 'No balance available';
-    amountInput.disabled = balance <= 0;
-  }
-
-  document.getElementById('wd-balance-hint').textContent = formatUsd(balance);
-  updateWithdrawalFields();
-  document.getElementById('withdrawal-modal')?.classList.add('open');
-}
-
-function updateWithdrawalFields() {
-  const method = document.getElementById('withdrawal-method')?.value;
-  const bankFields = document.getElementById('withdrawal-bank-fields');
-  const cryptoFields = document.getElementById('withdrawal-crypto-fields');
-  if (!bankFields || !cryptoFields) return;
-  bankFields.hidden = method !== 'bank';
-  cryptoFields.hidden = method !== 'crypto';
-}
-
-async function submitWithdrawal() {
-  if (!currentProfile) return;
-
-  const amount = document.getElementById('wd-amount').value.trim();
-  const method = document.getElementById('withdrawal-method').value;
-  const balance = Number(currentProfile.balance) || 0;
-
-  if (!amount || Number(amount) <= 0) {
-    showToast('Enter a valid withdrawal amount', 'error');
-    return;
-  }
-
-  if (Number(amount) > balance) {
-    showToast(`You can only withdraw up to ${formatUsd(balance)}`, 'error');
-    return;
-  }
-
-  const request = {
-    full_name: currentProfile.full_name || '',
-    email: currentProfile.email || '',
-    referral_code: currentProfile.referral_code || '',
-    amount: Number(amount),
-    method: method === 'bank' ? 'Bank Account' : 'Crypto',
-  };
-
-  if (method === 'bank') {
-    const bankName = document.getElementById('wd-bank-name').value.trim();
-    const accountNumber = document.getElementById('wd-account-number').value.trim();
-    const accountName = document.getElementById('wd-account-name').value.trim();
-    if (!bankName || !accountNumber || !accountName) {
-      showToast('Fill in all bank details', 'error');
-      return;
-    }
-    request.bank_name = bankName;
-    request.account_number = accountNumber;
-    request.account_name = accountName;
-  } else {
-    const cryptoType = document.getElementById('wd-crypto-type').value;
-    const wallet = document.getElementById('wd-wallet').value.trim();
-    if (!wallet) {
-      showToast('Enter your crypto wallet address', 'error');
-      return;
-    }
-    request.crypto_type = cryptoType;
-    request.wallet_address = wallet;
-  }
-
-  const btn = document.querySelector('#withdrawal-form button[type="submit"]');
-  btn.disabled = true;
-
-  const { data, error } = await sb.rpc('add_withdrawal_request', { p_request: request });
-
-  btn.disabled = false;
-
-  if (error) {
-    showToast(error.message, 'error');
-    return;
-  }
-
-  const newBalance =
-    data && data.new_balance != null ? Number(data.new_balance) : balance - Number(amount);
-
-  currentProfile.balance = newBalance;
-  document.getElementById('balance-display').textContent = formatUsd(newBalance);
-
-  document.getElementById('withdrawal-form')?.reset();
-  document.getElementById('withdrawal-modal')?.classList.remove('open');
-  document.getElementById('withdrawal-success-modal')?.classList.add('open');
-  showToast(`Withdrawal sent — new balance ${formatUsd(newBalance)}`, 'success');
 }
 
 async function fetchEligibleLevel(userId) {
   const { data, error } = await sb.rpc('calculate_eligible_level', { user_id: userId });
-  if (error) return '—';
-  return data ?? 1;
-}
-
-function getSalaryTier(profile) {
-  if (profile.level < 2) {
-    return 'Reach Level 2 to qualify for monthly salary from team accumulation.';
-  }
-  const monthly = Number(profile.monthly_team_accumulation) || 0;
-  const tier = [...MONTHLY_SALARY_TIERS].reverse().find((t) => monthly >= t.minNgn);
-  if (!tier) {
-    return `Current monthly team accumulation: ${formatNgn(monthly)}. Tiers: ₦1M → ₦20,000 · ₦2M → ₦50,000 · ₦5M → ₦100,000.`;
-  }
-  return `Monthly accumulation ${formatNgn(monthly)} — estimated salary ${formatNgn(tier.salaryNgn)}/month.`;
+  return error ? '—' : (data ?? 1);
 }
 
 function renderLevelProgress(container, profile, signups) {
   if (!container) return;
-  const team = Number(profile.team_accumulation) || 0;
+  const team = Number(profile.team_profit_accumulation_ngn ?? profile.team_accumulation) || 0;
   container.innerHTML = `
-    <li>Referral signups: <strong>${signups}</strong></li>
-    <li>Team accumulation: <strong>${formatNgn(team)}</strong></li>
+    <li>Referral signups: <strong>${signups}</strong> (need 3+ for Level 2)</li>
+    <li>Team profit: <strong>${formatNgn(team)}</strong> (≈ ${formatUsd(ngnToUsd(team))})</li>
     <li>Your level: <strong>Level ${profile.level}</strong></li>
-    <li><em>All investment levels are open to every investor.</em></li>
+    <li>Eligible level: <strong>Level ${document.getElementById('eligible-level')?.textContent || profile.level}</strong></li>
   `;
 }
 

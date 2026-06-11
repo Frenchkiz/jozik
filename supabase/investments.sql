@@ -33,6 +33,8 @@ CREATE POLICY "Users can view own investments"
   USING (auth.uid() = user_id);
 
 -- Create investment: deduct balance, record investment
+DROP FUNCTION IF EXISTS public.create_investment(integer, integer, numeric, numeric, numeric, numeric) CASCADE;
+
 CREATE OR REPLACE FUNCTION public.create_investment(
   p_level INTEGER,
   p_days INTEGER,
@@ -41,7 +43,7 @@ CREATE OR REPLACE FUNCTION public.create_investment(
   p_min_ngn NUMERIC,
   p_max_ngn NUMERIC
 )
-RETURNS UUID
+RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
@@ -49,6 +51,7 @@ AS $$
 DECLARE
   v_user_id UUID;
   v_balance NUMERIC;
+  v_new_balance NUMERIC;
   v_min_usd NUMERIC;
   v_max_usd NUMERIC;
   v_investment_id UUID;
@@ -79,12 +82,12 @@ BEGIN
     RAISE EXCEPTION 'Insufficient balance';
   END IF;
 
+  PERFORM set_config('jozik.internal_update', '1', true);
+
   UPDATE public.profiles
-  SET
-    balance = balance - p_amount_usd,
-    total_invested = total_invested + (p_amount_usd * v_ngn_rate),
-    updated_at = NOW()
-  WHERE id = v_user_id;
+  SET balance = balance - p_amount_usd, updated_at = NOW()
+  WHERE id = v_user_id
+  RETURNING balance INTO v_new_balance;
 
   INSERT INTO public.investments (
     user_id, plan_level, plan_days, daily_rate, amount_usd,
@@ -96,7 +99,7 @@ BEGIN
   )
   RETURNING id INTO v_investment_id;
 
-  RETURN v_investment_id;
+  RETURN jsonb_build_object('investment_id', v_investment_id, 'new_balance', v_new_balance);
 END;
 $$;
 

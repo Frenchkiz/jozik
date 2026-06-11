@@ -24,6 +24,7 @@
         <a href="index.html">Home</a>
         <button type="button" class="nav-link-btn" data-nav-trigger="deposit-btn">Deposit</button>
         <button type="button" class="nav-link-btn" data-nav-trigger="withdrawal-btn">Withdrawal</button>
+        <button type="button" class="nav-link-btn" data-how-to-invest>How to Invest</button>
         <button type="button" class="nav-link-btn" id="investment-plan-btn" aria-expanded="false">Plans</button>
         <button type="button" class="nav-link-btn" data-nav-trigger="profile-btn">Profile</button>
         <hr class="nav-divider">
@@ -32,6 +33,7 @@
       <div class="dashboard-actions dashboard-actions-desktop">
         <button type="button" class="btn btn-primary btn-sm" id="deposit-btn">Deposit</button>
         <button type="button" class="btn btn-outline btn-sm" id="withdrawal-btn">Withdrawal</button>
+        <button type="button" class="btn btn-outline btn-sm" id="how-to-invest-btn-desktop" data-how-to-invest>How to Invest</button>
         <button type="button" class="btn btn-outline btn-sm" id="investment-plan-btn-desktop" aria-expanded="false">Plans</button>
         <button type="button" class="btn btn-outline btn-sm" id="profile-btn">Profile</button>
         <button type="button" class="btn btn-ghost btn-sm" id="logout-btn">Logout</button>
@@ -63,7 +65,7 @@
         <button type="button" class="btn btn-sm btn-outline" style="margin-top:0.75rem" id="copy-referral-btn">Copy code</button>
       </div>
       <div class="stat-card">
-        <div class="label">Team accumulation</div>
+        <div class="label">Team profit</div>
         <div class="value value-sm" id="team-accumulation">₦0</div>
         <small style="color:var(--text-muted)">Eligible level: <span id="eligible-level">1</span></small>
       </div>
@@ -207,6 +209,17 @@
     </div>
   </div>
 
+  <!-- Plans modal -->
+  <div class="modal-overlay" id="plans-modal">
+    <div class="modal modal-lg modal-scroll">
+      <button type="button" class="modal-close" data-close-modal>&times;</button>
+      <h2>Investment plans</h2>
+      <p class="modal-hint">All levels open. Tap a plan to invest. Capital is locked; daily profit credits to your balance automatically.</p>
+      <div id="plans-modal-levels"></div>
+      <div id="plans-modal-info" class="info-panel" style="margin-top:1.5rem"></div>
+    </div>
+  </div>
+
   <!-- Plan confirm modal -->
   <div class="modal-overlay" id="plan-confirm-modal">
     <div class="modal">
@@ -271,12 +284,13 @@
     </div>
   </div>
 
-  <script src="js/footer.js"></script>
   <script src="js/gold-spin.js"></script>
   <script src="js/nav.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/plans.js"></script>
+  <script src="js/how-to-invest.js"></script>
+  <script src="js/footer.js"></script>
   <script src="js/dashboard.js"></script>
   <script>
     document.getElementById('copy-referral-btn')?.addEventListener('click', () => {
