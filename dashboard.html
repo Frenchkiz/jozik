@@ -86,8 +86,25 @@
       <div class="deposit-block">
         <h4>Bank transfer (Naira)</h4>
         <div class="deposit-row">
-          <span>Access Bank · 0722364383 · Jozik Capital</span>
-          <button type="button" class="btn btn-sm btn-outline" data-copy="Access Bank 0722364383 Jozik Capital" data-copy-label="Bank details">Copy</button>
+          <div style="flex:1"><strong>Bank name</strong></div>
+          <div style="flex:2"><span id="deposit-bank-name">Moniepoint MFB</span></div>
+          <div style="flex:1"><button type="button" class="btn btn-sm btn-outline" data-copy="Moniepoint MFB" data-copy-label="Bank name">Copy</button></div>
+        </div>
+        <div class="deposit-row">
+          <div style="flex:1"><strong>Account number</strong></div>
+          <div style="flex:2"><span id="deposit-account-number">4732095395</span></div>
+          <div style="flex:1"><button type="button" class="btn btn-sm btn-outline" data-copy="4732095395" data-copy-label="Account number">Copy</button></div>
+        </div>
+        <div class="deposit-row">
+          <div style="flex:1"><strong>Account name</strong></div>
+          <div style="flex:2"><span id="deposit-account-name">Pecky Merchant And Voucher 5th</span></div>
+          <div style="flex:1"><button type="button" class="btn btn-sm btn-outline" data-copy="Pecky Merchant And Voucher 5th" data-copy-label="Account name">Copy</button></div>
+        </div>
+
+        <div class="deposit-row" style="margin-top:0.75rem;align-items:center">
+          <div style="flex:1"><strong>Amount (NGN)</strong></div>
+          <div style="flex:2"><input type="number" id="deposit-amount-input" placeholder="Enter amount" min="0" step="0.01" style="width:100%;padding:0.35rem;border-radius:4px;border:1px solid #ddd"></div>
+          <div style="flex:1"><button type="button" class="btn btn-sm btn-outline" data-copy-target="deposit-amount-input" data-copy-label="Deposit amount">Copy</button></div>
         </div>
       </div>
 

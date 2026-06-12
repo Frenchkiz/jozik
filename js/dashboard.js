@@ -61,6 +61,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
+  document.querySelectorAll('[data-copy-target]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.copyTarget);
+      if (!target) return;
+      const val = (typeof target.value !== 'undefined' && target.value !== '') ? target.value : (target.textContent || '');
+      if (!val) return showToast('Nothing to copy', 'error');
+      copyText(val, btn.dataset.copyLabel || 'Detail');
+    });
+  });
+
   document.getElementById('profile-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!currentProfile) return;
