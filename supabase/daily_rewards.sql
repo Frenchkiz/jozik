@@ -312,7 +312,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE
   v_user_id UUID;
-  rec RECORD;
+  rec public.investments%ROWTYPE;
   days_to_credit INTEGER;
   d INTEGER;
   daily_count INTEGER := 0;

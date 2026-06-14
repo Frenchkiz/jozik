@@ -106,11 +106,18 @@ async function loadDashboard() {
 
   const { data: rewards, error: rewardsErr } = await sb.rpc('process_daily_rewards');
   if (!rewardsErr && rewards) {
+    // Supabase RPC may return an array or an object depending on the client/version.
+    const r = Array.isArray(rewards) ? rewards[0] : rewards;
     const parts = [];
-    if (rewards.daily_credits > 0) parts.push(`${rewards.daily_credits} daily profit credit(s)`);
-    if (rewards.matured > 0) parts.push(`${rewards.matured} investment(s) matured`);
-    if (rewards.salary_usd > 0) parts.push(`monthly salary ${formatUsd(rewards.salary_usd)}`);
+    if (r && r.daily_credits > 0) parts.push(`${r.daily_credits} daily profit credit(s)`);
+    if (r && r.matured > 0) parts.push(`${r.matured} investment(s) matured`);
+    if (r && r.salary_usd > 0) parts.push(`monthly salary ${formatUsd(r.salary_usd)}`);
     if (parts.length) showToast(parts.join(' · '), 'success');
+  } else if (rewardsErr) {
+    // Surface RPC errors clearly for debugging (status 400 seen in network)
+    console.error('process_daily_rewards error', rewardsErr);
+    const msg = rewardsErr?.message || 'Failed to process daily rewards (check console/network)';
+    showToast(`Daily credits failed: ${msg}`, 'error');
   }
 
   const { data: profile, error } = await sb
